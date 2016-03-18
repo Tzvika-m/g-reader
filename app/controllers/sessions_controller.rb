@@ -2,6 +2,8 @@ class SessionsController < ApplicationController
   layout false
  
   def new
+    puts "started session new"
+
   end
 
   def create
