@@ -5,7 +5,9 @@ class SessionsController < ApplicationController
   end
 
   def create
+    puts "started session create"
     user = User.find_or_create_by_auth(env["omniauth.auth"])
+    puts user.inspect
     session[:user_id] = user.id
     redirect_to root_path
   end
