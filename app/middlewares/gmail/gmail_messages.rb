@@ -11,7 +11,7 @@ module Gmail
     end
 
     def get_ebay_purchases
-    	gmail_query = 'from: ebay@ebay.com "your order"'
+    	gmail_query = 'from: dotan "your order"'
     	@result = {}
     	# Get all of the user's messages that may contain eBay purchases details
 		  client = Google::APIClient.new
@@ -87,12 +87,15 @@ module Gmail
 		def data_from_document(content)
 			# Known css selectors
 			price_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(3)'
-			price_css2 = 'body > table:nth-child(3)'
+			price_css2 = '.gmail_quote > div:nth-child(11) > table:nth-child(7) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(5) > td:nth-child(3)'
+			price_css3 = 'body > table:nth-child(3)'
 			product_name_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)'
 			product_name_css2 = '#titleComponent > div:nth-child(1) > p:nth-child(1)'
 			product_name_css3 = 'h2.product-name > a:nth-child(1)'
+			product_name_css4 = '.gmail_quote > div:nth-child(11) > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)'
 			date_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1)'
 			seller_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > b:nth-child(1) > a:nth-child(2)'
+			seller_css2 = '.gmail_quote > div:nth-child(11) > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > b:nth-child(1) > a:nth-child(2)'
 
 			html_doc = Nokogiri::HTML(content)
 			return_val = nil
@@ -104,16 +107,24 @@ module Gmail
 				product_name = html_doc.css(product_name_css).text.strip
 				product_name = html_doc.css(product_name_css2).text.strip if product_name == ""
 				product_name = html_doc.css(product_name_css3).text.strip if product_name == ""
+				product_name = html_doc.css(product_name_css4).text.strip if product_name == ""
+
 
 				# Look for the product's price
 				product_price = html_doc.css(price_css).text.strip
+				product_price = html_doc.css(price_css2).text.strip if product_price == ""
 				if product_price == ""
-					price_text = html_doc.css(price_css2).text.strip.downcase
-					product_price = price_text.split('paid : ')[1].split(' with')[0] if price_text = "" and price_text.include?('paid') #######
+					price_text = html_doc.css(price_css3).text.strip.downcase
+					product_price = price_text.split('paid : ')[1].split(' with')[0] if price_text = "" and price_text.include?('paid') 
 				end
 
 				# Look for the product's purchase date
 				date = html_doc.css(date_css).text.strip.to_date.strftime('%x') if html_doc.css(date_css).text.strip.to_date
+
+				# Look for the product's price
+				seller = html_doc.css(seller_css).text.strip
+				seller = html_doc.css(seller_css2).text.strip if seller == ""
+
 
 				return_val = {
 				 	id: id,
@@ -121,7 +132,7 @@ module Gmail
 						date: date,
 						name: product_name,
 						price: product_price,
-						seller: html_doc.css(seller_css).text.strip
+						seller: seller
 					}
 				}
 			end
