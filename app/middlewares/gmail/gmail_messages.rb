@@ -11,7 +11,7 @@ module Gmail
     end
 
     def get_ebay_purchases
-    	gmail_query = 'from: dotan "your order"'
+    	gmail_query = 'from: ebay@ebay.com "your order"'
     	@result = {}
     	# Get all of the user's messages that may contain eBay purchases details
 		  client = Google::APIClient.new
