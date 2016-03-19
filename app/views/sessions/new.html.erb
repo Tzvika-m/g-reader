@@ -18,10 +18,20 @@
 
 	function showPurchases(data) {
 		$("#resultsTable").show();
+		$("#resultsTable").find("tr:gt(0)").remove();
 		var row;
 		for (var id in data) {
-			if (data.hasOwnProperty(id)) {
-				row ='<tr> <td> ' + id.replace(/\D/g,'') + '</td> <td> ' + data[id]['name'] + '</td> <td> ' + data[id]['price'] + '</td> <td> ' + data[id]['seller'] + '</td> </tr>' ;
+			if (data.hasOwnProperty(id) && id.replace(/\D/g,'') != "") {
+				row ='<tr> <td> ' + id.replace(/\D/g,'') + '</td> <td> ' + data[id]['name'] + '</td> <td> ' + data[id]['price'] + '</td> <td> ' + data[id]['seller'] + '</td> <td> ' ;
+				if (data[id]['date'][0] != null)
+					row += data[id]['date'][0];
+				if (data[id]['date'].length > 1) {
+					for (var i = 1; i < data[id]['date'].length; i++) {
+						row += '<br /> ' + data[id]['date'][i];
+					}
+				}
+
+				row += '</td> </tr>';
 				$('#resultsTable').append(row);
 		  	}
 		}
@@ -39,6 +49,7 @@
 	  		<th> product name </th>
 	  		<th> product price </th>
 	  		<th> seller </th>
+	  		<th> purchase dates </th>
 	  	</tr>
 	  </table>
 	  <br />

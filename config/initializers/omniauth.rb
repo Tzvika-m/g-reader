@@ -3,5 +3,5 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   scope: ['email',
     'https://www.googleapis.com/auth/gmail.modify'],
     access_type: 'offline'}
-    OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
+    # OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
 end

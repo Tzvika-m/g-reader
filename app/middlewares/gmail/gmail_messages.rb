@@ -23,10 +23,11 @@ module Gmail
 		  messages.each do |msg|
 			  handle_message(msg['id'])
 			end
-
+			
 			return @result
     end
 
+    private
     def handle_message(id)
   	  client = Google::APIClient.new
 		  client.authorization.access_token = @user.fresh_token
@@ -48,16 +49,18 @@ module Gmail
 			if extracted_data
 				if !@result.keys.include?(extracted_data[:id])
 		  		@result[extracted_data[:id]] = extracted_data[:data]
+		  		@result[extracted_data[:id]][:date] = [extracted_data[:data][:date]].compact
 		  	else
 		  		@result[extracted_data[:id]][:name] ||= extracted_data[:data][:name]
 		  		@result[extracted_data[:id]][:price] ||= extracted_data[:data][:price]
 		  		@result[extracted_data[:id]][:seller] ||= extracted_data[:data][:seller]
-					@result[extracted_data[:id]][:date] << extracted_data[:data][:date]
+					@result[extracted_data[:id]][:date] << extracted_data[:data][:date] unless (@result[extracted_data[:id]][:date].include?(extracted_data[:data][:date]) or !extracted_data[:data][:date])
 		  	end
 			end
     end
 
     def get_item_id(html_doc)
+    	# Get the item id from the item/itemid parameter in the urls
 			href = nil
 			html_doc.search('a').each do |item|
 				link = item['href'].downcase
@@ -76,6 +79,7 @@ module Gmail
 		end
 
 		def data_from_document(content)
+			# Known css selectors
 			price_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(2) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(3)'
 			price_css2 = 'body > table:nth-child(3)'
 			product_name_css = 'body > table:nth-child(9) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > table:nth-child(1) > tbody:nth-child(1) > tr:nth-child(2) > td:nth-child(1) > table:nth-child(3) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > a:nth-child(1)'
@@ -90,30 +94,33 @@ module Gmail
 			id = get_item_id(html_doc)
 
 			if id != []
+				# Looking for the product's name
 				product_name = html_doc.css(product_name_css).text.strip
 				product_name = html_doc.css(product_name_css2).text.strip if product_name == ""
 				product_name = html_doc.css(product_name_css3).text.strip if product_name == ""
 
+				# Looking for the product's price
 				product_price = html_doc.css(price_css).text.strip
 				if product_price == ""
 					price_text = html_doc.css(price_css2).text.strip.downcase
 					product_price = price_text.split('paid : ')[1].split(' with')[0] if price_text and price_text.include?('paid') #######
 				end
 
+				# Looking for the product's purchase date
+				date = html_doc.css(date_css).text.strip.to_date.strftime('%x') if html_doc.css(date_css).text.strip.to_date
+
 				return_val = {
 				 	id: id,
 				 	data: {
-						date: [html_doc.css(date_css).text.strip.to_date],
+						date: date,
 						name: product_name,
 						price: product_price,
 						seller: html_doc.css(seller_css).text.strip
 					}
 				}
 			end
-			return_val
+			return return_val
 		end
-
-
 
 	end
 end
