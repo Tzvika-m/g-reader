@@ -3,7 +3,9 @@ require 'json'
 
 class User < ActiveRecord::Base
 	def self.find_or_create_by_auth(auth)
+    # Get or create the user record
   	user = User.where(uid: auth.uid).first_or_create
+    # Anyway, update it's details
   	user.update(
   		uid: auth.uid,
   		name: auth.info.name,
@@ -35,6 +37,7 @@ class User < ActiveRecord::Base
   end
  
   def refresh!
+    # Get a new token from google
     response = request_token_from_google
     data = JSON.parse(response.body)
     update_attributes(

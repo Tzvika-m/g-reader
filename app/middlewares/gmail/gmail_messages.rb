@@ -11,13 +11,15 @@ module Gmail
     end
 
     def get_ebay_purchases
+    	gmail_query = 'from: ebay@ebay.com "your order"'
     	@result = {}
+    	# Get all of the user's messages that may contain eBay purchases details
 		  client = Google::APIClient.new
 		  client.authorization.access_token = @user.fresh_token
 		  service = client.discovered_api('gmail')
 		  response = client.execute(
 		    :api_method => service.users.messages.list,
-		    :parameters => {'userId' => 'me', 'labelIds' => ['INBOX'], 'q' => 'from: ebay@ebay.com "your order"'},
+		    :parameters => {'userId' => 'me', 'labelIds' => ['INBOX'], 'q' => gmail_query},
 		    :headers => {'Content-Type' => 'application/json'})
 		  messages = JSON.parse(response.body)['messages'] || []
 		  messages.each do |msg|
@@ -29,6 +31,7 @@ module Gmail
 
     private
     def handle_message(id)
+    	# Get the the message body
   	  client = Google::APIClient.new
 		  client.authorization.access_token = @user.fresh_token
 		  service = client.discovered_api('gmail')
@@ -38,14 +41,17 @@ module Gmail
 		    :headers => {'Content-Type' => 'application/json'})
 		  data = JSON.parse(response.body)
 		  
+		  # User the text/html version
 			if data['payload']['parts'][0]['mimeType'] == "text/html"
 				content = Base64.urlsafe_decode64(data['payload']['parts'][0]['body']['data']).force_encoding("utf-8")
 			else
 				content = Base64.urlsafe_decode64(data['payload']['parts'][1]['body']['data']).force_encoding("utf-8")
 			end
 
+			# Get the details we are looking for from the email
 			extracted_data = data_from_document(content)
 
+			# Add the data to the result hash, if the item is allready found- add any new data
 			if extracted_data
 				if !@result.keys.include?(extracted_data[:id])
 		  		@result[extracted_data[:id]] = extracted_data[:data]
@@ -94,19 +100,19 @@ module Gmail
 			id = get_item_id(html_doc)
 
 			if id != []
-				# Looking for the product's name
+				# Look for the product's name
 				product_name = html_doc.css(product_name_css).text.strip
 				product_name = html_doc.css(product_name_css2).text.strip if product_name == ""
 				product_name = html_doc.css(product_name_css3).text.strip if product_name == ""
 
-				# Looking for the product's price
+				# Look for the product's price
 				product_price = html_doc.css(price_css).text.strip
 				if product_price == ""
 					price_text = html_doc.css(price_css2).text.strip.downcase
-					product_price = price_text.split('paid : ')[1].split(' with')[0] if price_text and price_text.include?('paid') #######
+					product_price = price_text.split('paid : ')[1].split(' with')[0] if price_text = "" and price_text.include?('paid') #######
 				end
 
-				# Looking for the product's purchase date
+				# Look for the product's purchase date
 				date = html_doc.css(date_css).text.strip.to_date.strftime('%x') if html_doc.css(date_css).text.strip.to_date
 
 				return_val = {
