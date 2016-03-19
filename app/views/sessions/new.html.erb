@@ -1,5 +1,47 @@
+<script>
+	function getPurchases() {
+		$("img").show();
+		$.ajax({
+		    url: '/ebay',
+		    type: "GET",
+			contentType: "application/json",
+			success: function(data) {
+				$("img").hide();
+				showPurchases(data);
+			},
+		    error: function(err) { 
+				$("img").hide();
+		    	alert("error");
+		    }
+		});
+	}
+
+	function showPurchases(data) {
+		$("#resultsTable").show();
+		var row;
+		for (var id in data) {
+			if (data.hasOwnProperty(id)) {
+				row ='<tr> <td> ' + id.replace(/\D/g,'') + '</td> <td> ' + data[id]['name'] + '</td> <td> ' + data[id]['price'] + '</td> <td> ' + data[id]['seller'] + '</td> </tr>' ;
+				$('#resultsTable').append(row);
+		  	}
+		}
+	}
+</script>
+
 <% if current_user %>
 	<%= current_user.name %>
+	  <button onclick="getPurchases()"> show eBay purchases </button>
+	  <br />
+	  <img src="http://i.stack.imgur.com/FhHRx.gif" style="display: none;" />
+	  <table id="resultsTable" style="display: none;" border=1>
+	  	<tr>
+	  		<th> product ID </th>
+	  		<th> product name </th>
+	  		<th> product price </th>
+	  		<th> seller </th>
+	  	</tr>
+	  </table>
+	  <br />
 	<%= link_to 'Sign out',  { action: :destroy }, method: :delete %>
 
 <% else %>

@@ -27,7 +27,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 gem 'omniauth'
 gem 'omniauth-google-oauth2'
 gem 'json'
-gem 'dawanda_client'
+gem 'google-api-client', '< 0.9', :require => 'google/api_client'
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt', '~> 3.1.7'

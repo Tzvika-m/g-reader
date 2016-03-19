@@ -9,11 +9,21 @@ class User < ActiveRecord::Base
   		name: auth.info.name,
   		access_token: auth.credentials.token,
   		refresh_token: auth.credentials.refresh_token,
-  		token_expires_at:	Time.at(auth.credentials.expires_at)
+  		token_expires_at:	Time.at(auth.credentials.expires_at).utc
   	)
   	user
   end
 
+  def fresh_token
+    refresh! if expired?
+    access_token
+  end
+
+  private
+  def request_token_from_google
+    url = URI("https://accounts.google.com/o/oauth2/token")
+    Net::HTTP.post_form(url, to_params)
+  end
 
   def to_params
     {
@@ -21,12 +31,7 @@ class User < ActiveRecord::Base
     'client_id' => ENV['GOOGLE_CLIENT_ID'], # Rails.application.secrets.google_client_id,
     'client_secret' => ENV['GOOGLE_CLIENT_SECRET'], # Rails.application.secrets.google_client_secret,
     'grant_type' => 'refresh_token'
-		}
-  end
- 
-  def request_token_from_google
-    url = URI("https://accounts.google.com/o/oauth2/token")
-    Net::HTTP.post_form(url, self.to_params)
+    }
   end
  
   def refresh!
@@ -34,16 +39,12 @@ class User < ActiveRecord::Base
     data = JSON.parse(response.body)
     update_attributes(
 	    access_token: data['access_token'],
-	    token_expires_at: Time.now + (data['expires_in'].to_i).seconds
-	  )
+	    token_expires_at: (Time.now + (data['expires_in'].to_i).seconds).utc
+	  ) 
   end
  
   def expired?
-    token_expires_at < Time.now
+    token_expires_at < Time.now.utc
   end
  
-  def fresh_token
-    refresh! if expired?
-    access_token
-  end
 end

@@ -1,6 +1,8 @@
 Rails.application.routes.draw do
   root to: 'sessions#new'
   resources :sessions, only: [:create, :destroy]
+  resources :ebay, only: [:index]
+
   get "/auth/:provider/callback" => 'sessions#create'
   get 'auth/failure', to: redirect('/')
   get 'signout', to: 'sessions#destroy'
